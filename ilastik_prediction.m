@@ -1,6 +1,6 @@
 
-% run ilastik headless
-% ilastik export settings - add saving to a separate folder
+% Run ilastik headless
+% Add saving to a separate folder
 
 % Find any version of Ilastik.exe from user computer
 basePath = 'C:\Program Files\';
@@ -11,21 +11,50 @@ else
     error('Ilastik not found among Program Files.');
 end
 
-% User chooses images folder, user choose model?
+%ilastik_path -> from app
+
+% Dynamic choice needed here
 ilastik_proj_path = 'C:\Users\Kasutaja\Desktop\BSc_thesis\testrun\draft1.ilp';
-imfolder = 'C:\Users\Kasutaja\Desktop\BSc_thesis\testrun\';
+imfolder = 'C:\Users\Kasutaja\Desktop\BSc_thesis\210816_100259_Plate 1_minifun';
 cd(imfolder);
 
-images = dir(fullfile(imfolder,'*.tif'));  % do I exclude TIFF format?
-cmds = struct('command', {});
+% Generate batches of terminal commands < 8191 char (Windows default limit)
 
-for i = 1:numel(images)
+images = dir(fullfile(imfolder,'*.tif'));
+cmds = struct('command', {});
+batch_nr = 0;
+i = 1;
+
+while i <= numel(images)
+
     cmd = sprintf('"%s" --headless --project="%s" "%s"', ...
-    ilastik_path, ...
-    ilastik_proj_path, ...
-    images(i).name);
-    cmds(i).command = cmd;
+        ilastik_path, ...
+        ilastik_proj_path, ...
+        images(i).name);
+    
+    cmd_length = length(cmd);
+    i = i+1;
+    
+    % Keep adding images if within the character limit
+    while i <= numel(images)
+        
+        img_str = sprintf(' "%s"', images(i).name);
+        
+        if cmd_length + length(img_str) >= 8191
+            break;
+        end
+
+        cmd = strcat(cmd, img_str);
+        cmd_length = length(cmd); % Update command length
+        i = i+1;                  % Move to the next image
+    
+    end
+
+    % Finalize batch
+    batch_nr = batch_nr + 1;
+    cmds(batch_nr).command = cmd;
 end
+
 
 logFile = 'process_log.txt';
 errorLog = 'error_log.txt';
@@ -69,6 +98,3 @@ end
 
 fclose(logs);
 fclose(errors);
-
-% Note - processing on praegu mega aeglane, kuue pildi jaoks läks äkki 3min?
-% kas startupi saab kiirendada?

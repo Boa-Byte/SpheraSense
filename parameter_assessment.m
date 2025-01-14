@@ -5,14 +5,12 @@
 
 % Get spheroid size, count pixels with >= 90% probability
 
-ilastik_prob_path = "C:\Users\Kasutaja\Desktop\BSc_thesis\testrun\A1_03_1_1Z2_Bright_Field_001_Probabilities.h5";
-
-img_path = "C:\Users\Kasutaja\Desktop\BSc_thesis\210816_100259_Plate 1_mini\A1_03_1_1Z0_Bright Field_001.tif";
-img = imread("A1_03_1_1Z0_Bright Field_001.tif");
+h5_path = "C:\Users\Kasutaja\Desktop\BSc_thesis\210816_100259_Plate 1_mini\set_of_six_Probabilities\A1_03_1_1Z2_Bright Field_001_Probabilities.h5";
+img_path = "C:\Users\Kasutaja\Desktop\BSc_thesis\210816_100259_Plate 1_mini\set_of_six\A1_03_1_1Z2_Bright Field_001.tif";
 
 metadata = imfinfo(img_path).ImageDescription;
 
-data = h5read(ilastik_prob_path, '/exported_data');
+data = h5read(h5_path, '/exported_data');
 disp(['Data shape: ', num2str(size(data))]); % Shape (c,x,y)
 num_classes = size(data, 1);
 show_class = 1; % spheroid = 1, background = 2
@@ -20,8 +18,9 @@ show_class = 1; % spheroid = 1, background = 2
 show = permute(data,[3,2,1]); % I want (y,x,c)
 spheroid_probability_map = show(:, :, show_class);
 
-threshold = 0.9;
-pixelcount = sum(spheroid_probability_map(:) >= threshold);
+%threshold = 0.9;
+%pixelcount = sum(spheroid_probability_map(:) >= threshold);
+pixelcount = 1;
 spheroid_area = pixelcount * microns_per_pixel(metadata);
 
 disp(['Spheroid area (pixels): ', num2str(pixelcount)]);
@@ -47,7 +46,7 @@ axis off;
 % sferoidi ruumala? metadatas Z planeide omavahelised kaugused
 
 
-function [realarea] = microns_per_pixel(metadata)
+function realarea = microns_per_pixel(metadata)
 
     width_pixels = XMLStringToVariable(metadata).ImageAcquisition.PixelWidth;
     height_pixels = XMLStringToVariable(metadata).ImageAcquisition.PixelWidth;

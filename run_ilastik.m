@@ -1,9 +1,11 @@
 % README:
 
 % run_ilastik(imfolder, ilastik_proj_path)
-% runs ilastik headless
-% imfolder = path to folder of microscopy images
-% ilastik_proj_path = path of Ilastik ML model (.ilp file)
+%   runs ilastik headless
+%   outputs a folder of (imfolder)_Probabilities, h5 probability files
+% params:
+%   imfolder = path to folder of microscopy images
+%   ilastik_proj_path = path of Ilastik ML model (.ilp file)
 
 % gen_cmds_ilastik(imfolder, ilastik_proj_path)
 % generates commands for all .tif files in img folder
@@ -149,3 +151,37 @@ end
 % 
 % fclose(logs);
 % fclose(errors);
+
+
+% function runn_ilastik(imfolder, ilastik_proj_path)
+% 
+%     cd(imfolder);
+%     cmds = gen_cmds_ilastik(imfolder, ilastik_proj_path);
+% 
+%     try
+%         for i = 1:numel(cmds)
+%             
+%             status = system(cmds(i).command); % Run command
+%             
+%             if status == 0
+%                 % batch ran successfully - log it?
+%             else
+%                 fprintf('Failed with status %d.\n', i, status);
+%             end
+%         end
+%     
+%     catch ME
+%         disp('Script interrupted with error: %s\n', ME.message);
+% 
+%     end
+% 
+%     % move resulting h5 files to a Probabilities folder
+%     h5_files = dir(fullfile(imfolder, '*.h5'));
+%     dest_path = [fullfile(imfolder), '_Probabilities'];
+%     mkdir(dest_path);
+%     
+%     for j = 1:length(h5_files)
+%         movefile(h5_files(j).name, dest_path);
+%     end
+% 
+% end
