@@ -4,7 +4,7 @@
 %
 % dataset_handling(folder_path)
 %   - input = microscopy images folder path in single quotes ''
-%   - output = master dataset "filenames_data"
+%   - output = master dataset filenames_data
 %
 % AN(filenames_data)
 %   - sorts filenames_data alphanumerically by WellID
@@ -15,7 +15,9 @@ function [filenames_data, nonmatch_files] = dataset_handling(folder_path)
     filenames = dir(fullfile(folder_path, '*.tif'));
     nr_images = numel(filenames);
     
-    pattern = '(?<WellID>[A-Z]\d{1,2})_(?<ReadIndex>\d+)_(?<ChannelIndex>\d+)_(?<ZIndex>\w{3})_(?<ChannelName>[\w\s]+)_(?<CycleIndex>\d+)';
+    % A1_03_1_1Z0_Bright Field_001
+    % A1_03_1_1_Bright Field_001
+        pattern = '(?<WellID>[A-Z]\d{1,2})_(?<ReadIndex>\d+)_(?<ChannelIndex>\d+)_(?<ZIndex>\w)_(?<ChannelName>[\w\s]+)_(?<CycleIndex>\d+)';
    
     filenames_data = struct('FilePath', {}, 'FileName', {}, 'WellID', {}, 'ReadIndex', {}, 'ChannelIndex', {}, 'ZIndex', {}, 'ZPlane', {}, 'ChannelName', {}, 'CycleIndex', {});
     nonmatch_files = {};
@@ -38,7 +40,7 @@ function [filenames_data, nonmatch_files] = dataset_handling(folder_path)
             file_data.ReadIndex = str2double(file_match.ReadIndex);
             file_data.ChannelIndex = str2double(file_match.ChannelIndex);
             file_data.ZIndex = file_match.ZIndex;
-            file_data.ZPlane = str2double(file_match.ZIndex(3));
+            file_data.ZPlane = str2double(file_match.ZIndex(end));
             file_data.ChannelName = file_match.ChannelName;
             file_data.CycleIndex = str2double(file_match.CycleIndex);
         

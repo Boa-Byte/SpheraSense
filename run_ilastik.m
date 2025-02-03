@@ -13,7 +13,6 @@
 
 function run_ilastik(imfolder, ilastik_proj_path, progress)
 
-    cd(imfolder);
     cmds = gen_cmds_ilastik(imfolder, ilastik_proj_path);
 
     n = numel(dir(fullfile(imfolder, '*.tif')));
