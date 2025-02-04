@@ -17,7 +17,7 @@ function [filenames_data, nonmatch_files] = dataset_handling(folder_path)
     
     % A1_03_1_1Z0_Bright Field_001
     % A1_03_1_1_Bright Field_001
-        pattern = '(?<WellID>[A-Z]\d{1,2})_(?<ReadIndex>\d+)_(?<ChannelIndex>\d+)_(?<ZIndex>\w)_(?<ChannelName>[\w\s]+)_(?<CycleIndex>\d+)';
+        pattern = '(?<WellID>[A-Z]\d{1,2})_(?<ReadIndex>\d+)_(?<ChannelIndex>\d+)_(?<ZIndex>[\w\d]+)_(?<ChannelName>[\w\s]+)_(?<CycleIndex>\d+)';
    
     filenames_data = struct('FilePath', {}, 'FileName', {}, 'WellID', {}, 'ReadIndex', {}, 'ChannelIndex', {}, 'ZIndex', {}, 'ZPlane', {}, 'ChannelName', {}, 'CycleIndex', {});
     nonmatch_files = {};
