@@ -16,43 +16,49 @@ function run_ilastik(folder_path, ilastik_proj_path, progress)
     
     cd(folder_path);
     cmds = gen_cmds_ilastik(folder_path, ilastik_proj_path);
-
-    n = numel(dir(fullfile(folder_path, '*.tif'))); % Total images to process
+    n = sum([cmds.im_in_batch]);
     n_done = 0;
-    
+   
     for i = 1:numel(cmds)
-       
-        %system(cmds(i).command); % Run a command with a batch of images
-        %system(['start cmd /k "' cmds(i).command '"']);
-        %system(['start /B "" "', cmds(i).command, '"']);
-        system(['start cmd /c "' cmds(i).command, ' & timeout /t 5"']);
-        
-        expected_h5 = n_done + cmds(i).im_in_batch;
-        
-        while n_done < expected_h5
-            pause(2)
-            n_done = numel(dir(fullfile(folder_path, '*.h5')));
-            progress.Value = n_done / n;
-            progress.Message = sprintf('Processing image %d of %d...', n_done, n);
-            drawnow;
-        end        
+        % Execute commands in separate terminals in parallel
+        system(['start cmd /c "' cmds(i).command ]); % for some reason got stuck when using /B
     end
+
+    while n_done < n
+        pause(1)
+        n_done = numel(dir(fullfile(folder_path, '*.h5')));
+        progress.Value = n_done / n;
+        progress.Message = sprintf('Processing image %d of %d...', n_done, n);
+        drawnow;
+    end
+
+%     find the ilastik process and kill it
+%     [~, tasks] = system('tasklist');
+%     index = strfind(tasks, 'ilastik.exe');
+%     processID = regexp(tasks(index:end), '[0-9]{1,6}', 'once', 'match');
+%     system(['taskkill /pid ', processID]);
+
+%   system('taskkill /F /IM ilastik.exe'); filemove error = ilastik still open
     
+    pause(5)
+    progress.Message = 'Processing complete.';
+    pause(2)
+
     % move resulting h5 files to a Probabilities folder
     h5_files = dir(fullfile(folder_path, '*.h5'));
     dest_path = [fullfile(folder_path), '_Probabilities'];
-    mkdir(dest_path);
-    
-    for j = 1:length(h5_files)
-        movefile(h5_files(j).name, dest_path);
+
+    if ~exist(dest_path, 'dir')
+        mkdir(dest_path);
     end
 
-    progress.Message = 'Processing complete!';
+    for j = 1:length(h5_files)
+        movefile(h5_files(j).name, dest_path, 'f'); % overwrite if a file with the same name already exists
+    end   
 end
 
 
-
-function cmds = gen_cmds_ilastik(imfolder, ilastik_proj_path)
+function cmds = gen_cmds_ilastik(folder_path, ilastik_proj_path)
 
     % Find any version of Ilastik.exe from user computer
     basePath = 'C:\Program Files\';
@@ -64,12 +70,14 @@ function cmds = gen_cmds_ilastik(imfolder, ilastik_proj_path)
     end
     
     % Generate batches of terminal commands < 8191 char (Windows default limit)
-    images = dir(fullfile(imfolder,'*.tif'));
+    images = dir(fullfile(folder_path,'*.tif'));
+    brightFieldImages = images(contains({images.name}, 'Bright Field'));
+    
     cmds = struct('command', {}, 'im_in_batch', {});
     batch_nr = 1;
     i = 1; % image index
     
-    while i <= numel(images)
+    while i <= numel(brightFieldImages)
         
         % Initiate new command
         cmd = sprintf('"%s" --headless --project="%s"', ...
@@ -79,19 +87,18 @@ function cmds = gen_cmds_ilastik(imfolder, ilastik_proj_path)
         j = 0; % image count
         cmd_length = length(cmd);
                  
-        while i <= numel(images)  % Add images if within the character limit
+        while i <= numel(brightFieldImages)  % Add images if within the character limit
             
-            img_str = sprintf(' "%s"', images(i).name);
+            img_str = sprintf(' "%s"', brightFieldImages(i).name);
                        
-            if cmd_length + length(img_str) >= 8150 % >= 8191
+            if cmd_length + length(img_str) >= 8150 % >= 8191 is max per cmd, 1100 is around 30 img
                 break;
             end
     
             cmd = strcat(cmd, img_str);
             cmd_length = length(cmd);       % Update command length
             j = j+1;                        % Record how many img per cmd
-            i = i+1;                        % Move to the next image
-            
+            i = i+1;                        % Move to the next image       
         end
         % Finalize batch
         cmds(batch_nr).command = cmd;
@@ -99,24 +106,6 @@ function cmds = gen_cmds_ilastik(imfolder, ilastik_proj_path)
         batch_nr = batch_nr + 1;
     end
 end
-
-
-% function trackprogress(imfolder)
-% 
-%     % Checking nr files vs nr nr files done
-%     progress = uiprogressdlg(app.UIFigure, 'Title', 'Processing', 'Message', 'Starting...');
-%     n = length(dir(imfolder));
-%     n_done = 0;
-%     
-%     while n_done < n
-%         progress.Value = n_done / n;
-%         progress.Message = sprintf('Processing image %d of %d...', n_done, n);
-%         n_done = numel(dir(fullfile(imfolder, '*.h5')));
-%         pause(0.5); % Pause to avoid excessive CPU usage
-%     end
-%     
-%     close(progress);
-% end
 
 
 % logFile = 'process_log.txt';
